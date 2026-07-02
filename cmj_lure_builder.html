@@ -89,7 +89,6 @@
     cursor: pointer;
     transition: all 0.15s;
     white-space: nowrap;
-    position: relative;
   }
   .option-btn:hover { border-color: #3FF700; color: #ffffff; }
   .option-btn.selected { border-color: #3FF700; background: #3FF700; color: #000000; }
@@ -182,6 +181,7 @@
   }
   .add-btn:hover { background: #5fff33; transform: translateY(-2px); }
   .add-btn:disabled { background: #333; color: #666; cursor: not-allowed; transform: none; }
+  .loading-btn { background: #555 !important; cursor: wait !important; transform: none !important; }
   .incomplete-msg { text-align: center; font-size: 13px; color: #ff6b6b; min-height: 20px; }
   .success-box {
     display: none;
@@ -195,9 +195,24 @@
   .success-box.show { display: block; }
   .success-box h2 { font-size: 26px; font-weight: 900; color: #3FF700; margin-bottom: 10px; }
   .success-box p { color: #aaaaaa; font-size: 15px; line-height: 1.6; }
+  .checkout-btn {
+    display: inline-block;
+    margin-top: 16px;
+    padding: 14px 36px;
+    background: #3FF700;
+    color: #000;
+    font-size: 17px;
+    font-weight: 900;
+    border-radius: 50px;
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+  .checkout-btn:hover { background: #5fff33; }
   .reset-btn {
-    margin-top: 20px;
-    padding: 12px 32px;
+    display: inline-block;
+    margin-top: 12px;
+    margin-left: 12px;
+    padding: 14px 36px;
     background: transparent;
     border: 2px solid #3FF700;
     color: #3FF700;
@@ -225,7 +240,6 @@
     <div class="deal-sub">Handpoured fresh to order by Crappie Man Jigs · Prosperity, SC</div>
   </div>
 
-  <!-- Step 1: Molds -->
   <div class="step" id="step-mold">
     <div class="step-label">Step 1</div>
     <div class="step-title">Choose Your Bait(s)</div>
@@ -234,14 +248,12 @@
     <div class="mold-selected-list" id="mold-tags"></div>
   </div>
 
-  <!-- Step 2: Top Color -->
   <div class="step" id="step-top">
     <div class="step-label">Step 2</div>
     <div class="step-title">Top Color</div>
     <div class="options-grid" id="top-options"></div>
   </div>
 
-  <!-- Step 3: Top Glitter -->
   <div class="step" id="step-top-glitter">
     <div class="step-label">Step 3</div>
     <div class="step-title">Top Glitter</div>
@@ -249,14 +261,12 @@
     <div class="options-grid" id="top-glitter-options"></div>
   </div>
 
-  <!-- Step 4: Bottom Color -->
   <div class="step" id="step-bottom">
     <div class="step-label">Step 4</div>
     <div class="step-title">Bottom Color</div>
     <div class="options-grid" id="bottom-options"></div>
   </div>
 
-  <!-- Step 5: Bottom Glitter -->
   <div class="step" id="step-bottom-glitter">
     <div class="step-label">Step 5</div>
     <div class="step-title">Bottom Glitter</div>
@@ -264,7 +274,6 @@
     <div class="options-grid" id="bottom-glitter-options"></div>
   </div>
 
-  <!-- Summary -->
   <div class="summary-box" id="summary-box">
     <h3>Your Custom Order</h3>
     <div class="summary-row"><span class="summary-key">Bait(s)</span><span class="summary-val" id="s-mold">—</span></div>
@@ -284,14 +293,18 @@
   <div class="incomplete-msg" id="incomplete-msg">Please complete all selections above</div>
 
   <div class="success-box" id="success-box">
-    <h2>Order Added! 🎣</h2>
+    <h2>Added to Cart! 🎣</h2>
     <p id="success-detail"></p>
     <p style="margin-top:12px;color:#3FF700;">We'll pour your custom bait fresh and ship every single one out to you.</p>
+    <a class="checkout-btn" href="https://crappie-man-jigs.myshopify.com/checkout" target="_parent">Proceed to Checkout</a>
     <button class="reset-btn" onclick="resetBuilder()">Build Another</button>
   </div>
 
 </div>
 <script>
+  const SHOPIFY_DOMAIN = 'crappie-man-jigs.myshopify.com';
+  const VARIANT_ID = '11054286012583'; // Custom Lure Build product variant ID
+
   const MOLDS = [
     'Little Minnow 1.5"','Little Stinker 1.5"','1.5" Swimbait',
     'The OG 2 Inch','Saccader','Micro Minnow',
@@ -317,14 +330,13 @@
   let selectedMolds = [];
   let selections = { top: null, topGlitter: [], bottom: null, bottomGlitter: [] };
 
-  // ── Molds (up to 3) ──
   function buildMolds() {
     const container = document.getElementById('mold-options');
     container.innerHTML = '';
     MOLDS.forEach(item => {
-      const btn = document.createElement('button');
       const isSelected = selectedMolds.includes(item);
       const isDisabled = !isSelected && selectedMolds.length >= 3;
+      const btn = document.createElement('button');
       btn.className = 'option-btn' + (isSelected ? ' selected' : '') + (isDisabled ? ' disabled-btn' : '');
       btn.textContent = item;
       btn.onclick = () => {
@@ -349,7 +361,8 @@
     selectedMolds.forEach(mold => {
       const tag = document.createElement('div');
       tag.className = 'mold-tag';
-      tag.innerHTML = `${mold} <button onclick="removeMold('${mold}')">×</button>`;
+      const escapedMold = mold.replace(/'/g, "\\'");
+      tag.innerHTML = `${mold} <button onclick="removeMold('${escapedMold}')">×</button>`;
       container.appendChild(tag);
     });
   }
@@ -362,7 +375,6 @@
     checkComplete();
   }
 
-  // ── Single select ──
   function buildSingle(containerId, items, key) {
     const container = document.getElementById(containerId);
     container.innerHTML = '';
@@ -380,7 +392,6 @@
     });
   }
 
-  // ── Multi select (up to 2) ──
   function buildMulti(containerId, items, key) {
     const container = document.getElementById(containerId);
     container.innerHTML = '';
@@ -430,14 +441,49 @@
     }
   }
 
-  function submitOrder() {
-    const detail = `Baits: ${selectedMolds.join(', ')} | Top: ${selections.top} + ${selections.topGlitter.join(' & ')} glitter | Bottom: ${selections.bottom} + ${selections.bottomGlitter.join(' & ')} glitter | 2 cups plastic | $40.00`;
-    document.getElementById('success-detail').textContent = detail;
-    document.getElementById('success-box').classList.add('show');
-    document.getElementById('add-btn').style.display = 'none';
-    document.getElementById('incomplete-msg').style.display = 'none';
-    document.getElementById('summary-box').style.display = 'none';
-    console.log('ORDER:', { molds: selectedMolds, ...selections, price: 40.00 });
+  async function submitOrder() {
+    const btn = document.getElementById('add-btn');
+    btn.classList.add('loading-btn');
+    btn.textContent = 'Adding to Cart...';
+
+    const note = `CUSTOM LURE BUILD | Baits: ${selectedMolds.join(', ')} | Top Color: ${selections.top} | Top Glitter: ${selections.topGlitter.join(' & ')} | Bottom Color: ${selections.bottom} | Bottom Glitter: ${selections.bottomGlitter.join(' & ')} | 2 cups plastic`;
+
+    try {
+      const response = await fetch(`https://${SHOPIFY_DOMAIN}/cart/add.js`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items: [{
+            id: VARIANT_ID,
+            quantity: 1,
+            properties: {
+              'Bait(s)': selectedMolds.join(', '),
+              'Top Color': selections.top,
+              'Top Glitter': selections.topGlitter.join(' & '),
+              'Bottom Color': selections.bottom,
+              'Bottom Glitter': selections.bottomGlitter.join(' & '),
+              'Plastic': '2 Cups — Fresh Pour'
+            }
+          }]
+        })
+      });
+
+      if (response.ok) {
+        const detail = `${selectedMolds.join(', ')} | Top: ${selections.top} + ${selections.topGlitter.join(' & ')} | Bottom: ${selections.bottom} + ${selections.bottomGlitter.join(' & ')}`;
+        document.getElementById('success-detail').textContent = detail;
+        document.getElementById('success-box').classList.add('show');
+        document.getElementById('add-btn').style.display = 'none';
+        document.getElementById('incomplete-msg').style.display = 'none';
+        document.getElementById('summary-box').style.display = 'none';
+      } else {
+        throw new Error('Cart error');
+      }
+    } catch(e) {
+      btn.classList.remove('loading-btn');
+      btn.textContent = 'Add to Cart — $40.00';
+      btn.disabled = false;
+      alert('Something went wrong adding to cart. Please try again.');
+    }
   }
 
   function resetBuilder() {
@@ -446,6 +492,8 @@
     document.getElementById('success-box').classList.remove('show');
     document.getElementById('add-btn').style.display = 'block';
     document.getElementById('add-btn').disabled = true;
+    document.getElementById('add-btn').textContent = 'Add to Cart — $40.00';
+    document.getElementById('add-btn').classList.remove('loading-btn');
     document.getElementById('incomplete-msg').style.display = 'block';
     document.getElementById('summary-box').style.display = 'block';
     init();
