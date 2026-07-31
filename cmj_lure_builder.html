@@ -308,7 +308,7 @@
   const MOLDS = [
     'Little Minnow 1.5"','Little Stinker 1.5"','1.5" Swimbait',
     'The OG 2 Inch','Saccader','Micro Minnow',
-    '19mm Urchin','7 Inch Trick Worm','3.5 Inch Craw',
+    '7 Inch Trick Worm','3.5 Inch Craw',
     '5 Inch Stinko','5 Inch Fluke','6 Inch Lizard',
     'Booty Toad','5 Inch Swimbait'
   ];
@@ -318,7 +318,7 @@
     'Honey','Orange','Purple','Lime'
   ];
   const GLITTERS = [
-    'Red','Black','Blue','Green','Pink Flo',
+    'No Glitter','Red','Black','Blue','Green','Pink Flo',
     'Silver','Gold Blend','Purple'
   ];
   const BOTTOM_COLORS = [
@@ -411,7 +411,12 @@
         if (isDisabled) return;
         if (idx !== -1) {
           selections[key].splice(idx, 1);
+        } else if (item === 'No Glitter') {
+          selections[key] = ['No Glitter'];
         } else {
+          if (selections[key].includes('No Glitter')) {
+            selections[key] = selections[key].filter(g => g !== 'No Glitter');
+          }
           if (selections[key].length < 2) selections[key].push(item);
         }
         buildMulti(containerId, items, key);
